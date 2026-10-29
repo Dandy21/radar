@@ -137,306 +137,419 @@ a{color:inherit}
 .lockbox .err{color:#F2A08A}
 .lockbox .err:empty{display:none}
 </style>
+<style>
+/* old TV browser fallbacks */
+.reader{top:0;right:0;bottom:0;left:0}
+.check{top:.6rem;left:.6rem}
+.card:focus,.tab:focus,.btn:focus,.next:focus{outline:none}
+.card:focus{transform:scale(1.06);background:var(--surface-hi);border-color:var(--focus);box-shadow:0 0 0 .18rem var(--focus),0 1rem 2.2rem rgba(0,0,0,.5);z-index:1}
+.tab:focus{background:var(--ink);color:var(--bg)}
+.btn:focus{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.next:focus{border-color:var(--focus);box-shadow:0 0 0 .18rem var(--focus)}
+.tabs>*+*{margin-right:.4rem}
+.track>*+*{margin-right:1rem}
+@supports (gap:1rem){.tabs>*+*,.track>*+*{margin-right:0}}
+</style>
 <style>body{margin:0}</style>
 </head>
 <body>
+<script>
+window.onerror=function(m,src,l,c){var d=document.getElementById("errbox");if(!d){d=document.createElement("div");d.id="errbox";d.style.cssText="position:fixed;bottom:0;left:0;right:0;background:#3a1212;color:#fff;font:16px sans-serif;padding:10px 16px;z-index:99;direction:ltr";document.body.appendChild(d);}d.textContent="Radar error: "+m+" (line "+l+")";};
+</script>
 <div id="app"></div>
 
 <script>
-(() => {
-/* ---------- taxonomy ---------- */
-const TOPICS = [
-  {id:"ai", label:"בינה מלאכותית", color:"--t-ai"},
-  {id:"vc", label:"השקעות", color:"--t-vc"},
-  {id:"general", label:"כללי וביג-טק", color:"--t-general"}
-];
-const REGIONS = {il:{label:"ישראל"}, world:{label:"עולם"}};
-const TABS = [{id:"all",label:"הכל"},{id:"il",label:"ישראל"},{id:"world",label:"עולם"}];
-const CONTEXTS = [
-  {id:"anthropic", label:"סביב Anthropic", re:/Anthropic|אנתרופיק|Claude/i},
-  {id:"openai", label:"סביב OpenAI", re:/OpenAI|ChatGPT|GPT-|אלטמן/i},
-  {id:"nvidia", label:"אנבידיה ושבבים", re:/אנבידיה|Nvidia|שבב|GPU|ברודקום|Broadcom|TPU/i},
-  {id:"google", label:"גוגל ואלפבית", re:/גוגל|Google|Gemini|אלפבית|Alphabet/i},
-  {id:"microsoft", label:"מיקרוסופט", re:/מיקרוסופט|Microsoft|Azure|Copilot/i},
-  {id:"apple", label:"אפל", re:/אפל |אפל:|^אפל|Apple|iPhone|אייפון|MacBook|iOS/i},
-  {id:"meta", label:"מטא", re:/מטא |^מטא|Meta |אינסטגרם|צוקרברג/i},
-  {id:"amazon", label:"אמזון ו-AWS", re:/אמזון|Amazon|AWS/i},
-  {id:"musk", label:"עולם מאסק", re:/מאסק|טסלה|Tesla|SpaceX|xAI|Grok/i},
-  {id:"ipo", label:"הנפקות", re:/הנפק|IPO/i},
-  {id:"cyber", label:"סייבר ואבטחה", re:/סייבר|פריצ|כופר|תקיפ|חולש|דליפ/i},
-  {id:"layoffs", label:"פיטורים וקיצוצים", re:/פיטור|מפטר|קיצוץ|פרישה מרצון/i},
-  {id:"robots", label:"רובוטיקה ו-Physical AI", re:/רובוט|Physical AI/i},
-  {id:"agents", label:"סוכני AI", re:/סוכן|סוכני|agent/i},
-  {id:"datacenter", label:"מרכזי נתונים ומחשוב", re:/מרכזי נתונים|דאטה סנטר|Neocloud|קיבולת|כוח חישוב/i}
-];
-
-/* ---------- state ---------- */
-const LS="radar.tv";
-let articles=[], updatedAt=null, loaded=false, locked=false, lockErr="";
-let readMap=lsGet("read")||{}, saved=lsGet("saved")||{};
-let region=(lsGet("ui")||{}).region||"all";
-let rows=[], zone=1, tabIdx=TABS.findIndex(t=>t.id===region), colIdx={};
-let openId=null, openFrom=null;
-
-function lsGet(k){ try{ const v=localStorage.getItem(LS+"."+k); return v?JSON.parse(v):null; }catch{ return null; } }
-function lsSet(k,v){ try{ localStorage.setItem(LS+"."+k, JSON.stringify(v)); }catch{} }
-const $=s=>document.querySelector(s);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const rtf=(()=>{ try{ return new Intl.RelativeTimeFormat("he",{numeric:"auto"}); }catch{ return null; } })();
-function ago(iso){
-  const t=Date.parse(iso); if(!t) return "";
-  const s=(t-Date.now())/1000, a=Math.abs(s);
-  if(rtf){
-    if(a<3600) return rtf.format(Math.round(s/60),"minute");
-    if(a<86400) return rtf.format(Math.round(s/3600),"hour");
-    if(a<86400*7) return rtf.format(Math.round(s/86400),"day");
+var __defProp = Object.defineProperty, __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty, __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: !0, configurable: !0, writable: !0, value }) : obj[key] = value, __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    __hasOwnProp.call(b, prop) && __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b))
+      __propIsEnum.call(b, prop) && __defNormalProp(a, prop, b[prop]);
+  return a;
+}, __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+Object.fromEntries || (Object.fromEntries = function(e) {
+  var o = {};
+  return e.forEach(function(p) {
+    o[p[0]] = p[1];
+  }), o;
+}), (() => {
+  const TOPICS = [
+    { id: "ai", label: "\u05D1\u05D9\u05E0\u05D4 \u05DE\u05DC\u05D0\u05DB\u05D5\u05EA\u05D9\u05EA", color: "--t-ai" },
+    { id: "vc", label: "\u05D4\u05E9\u05E7\u05E2\u05D5\u05EA", color: "--t-vc" },
+    { id: "general", label: "\u05DB\u05DC\u05DC\u05D9 \u05D5\u05D1\u05D9\u05D2-\u05D8\u05E7", color: "--t-general" }
+  ], REGIONS = { il: { label: "\u05D9\u05E9\u05E8\u05D0\u05DC" }, world: { label: "\u05E2\u05D5\u05DC\u05DD" } }, TABS = [{ id: "all", label: "\u05D4\u05DB\u05DC" }, { id: "il", label: "\u05D9\u05E9\u05E8\u05D0\u05DC" }, { id: "world", label: "\u05E2\u05D5\u05DC\u05DD" }], CONTEXTS = [
+    { id: "anthropic", label: "\u05E1\u05D1\u05D9\u05D1 Anthropic", re: /Anthropic|אנתרופיק|Claude/i },
+    { id: "openai", label: "\u05E1\u05D1\u05D9\u05D1 OpenAI", re: /OpenAI|ChatGPT|GPT-|אלטמן/i },
+    { id: "nvidia", label: "\u05D0\u05E0\u05D1\u05D9\u05D3\u05D9\u05D4 \u05D5\u05E9\u05D1\u05D1\u05D9\u05DD", re: /אנבידיה|Nvidia|שבב|GPU|ברודקום|Broadcom|TPU/i },
+    { id: "google", label: "\u05D2\u05D5\u05D2\u05DC \u05D5\u05D0\u05DC\u05E4\u05D1\u05D9\u05EA", re: /גוגל|Google|Gemini|אלפבית|Alphabet/i },
+    { id: "microsoft", label: "\u05DE\u05D9\u05E7\u05E8\u05D5\u05E1\u05D5\u05E4\u05D8", re: /מיקרוסופט|Microsoft|Azure|Copilot/i },
+    { id: "apple", label: "\u05D0\u05E4\u05DC", re: /אפל |אפל:|^אפל|Apple|iPhone|אייפון|MacBook|iOS/i },
+    { id: "meta", label: "\u05DE\u05D8\u05D0", re: /מטא |^מטא|Meta |אינסטגרם|צוקרברג/i },
+    { id: "amazon", label: "\u05D0\u05DE\u05D6\u05D5\u05DF \u05D5-AWS", re: /אמזון|Amazon|AWS/i },
+    { id: "musk", label: "\u05E2\u05D5\u05DC\u05DD \u05DE\u05D0\u05E1\u05E7", re: /מאסק|טסלה|Tesla|SpaceX|xAI|Grok/i },
+    { id: "ipo", label: "\u05D4\u05E0\u05E4\u05E7\u05D5\u05EA", re: /הנפק|IPO/i },
+    { id: "cyber", label: "\u05E1\u05D9\u05D9\u05D1\u05E8 \u05D5\u05D0\u05D1\u05D8\u05D7\u05D4", re: /סייבר|פריצ|כופר|תקיפ|חולש|דליפ/i },
+    { id: "layoffs", label: "\u05E4\u05D9\u05D8\u05D5\u05E8\u05D9\u05DD \u05D5\u05E7\u05D9\u05E6\u05D5\u05E6\u05D9\u05DD", re: /פיטור|מפטר|קיצוץ|פרישה מרצון/i },
+    { id: "robots", label: "\u05E8\u05D5\u05D1\u05D5\u05D8\u05D9\u05E7\u05D4 \u05D5-Physical AI", re: /רובוט|Physical AI/i },
+    { id: "agents", label: "\u05E1\u05D5\u05DB\u05E0\u05D9 AI", re: /סוכן|סוכני|agent/i },
+    { id: "datacenter", label: "\u05DE\u05E8\u05DB\u05D6\u05D9 \u05E0\u05EA\u05D5\u05E0\u05D9\u05DD \u05D5\u05DE\u05D7\u05E9\u05D5\u05D1", re: /מרכזי נתונים|דאטה סנטר|Neocloud|קיבולת|כוח חישוב/i }
+  ], LS = "radar.tv";
+  let articles = [], updatedAt = null, loaded = !1, locked = !1, lockErr = "", readMap = lsGet("read") || {}, saved = lsGet("saved") || {}, region = (lsGet("ui") || {}).region || "all", rows = [], zone = 1, tabIdx = TABS.findIndex((t) => t.id === region), colIdx = {}, openId = null, openFrom = null;
+  function lsGet(k) {
+    try {
+      const v = localStorage.getItem(LS + "." + k);
+      return v ? JSON.parse(v) : null;
+    } catch (e) {
+      return null;
+    }
   }
-  return new Date(t).toLocaleDateString("he-IL",{day:"numeric",month:"long"});
-}
-const fullDate=iso=>{ const t=Date.parse(iso); return t? new Date(t).toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"}):""; };
-const readMins=a=>Math.max(1,Math.round(((a.body||[]).join(" ").split(/\s+/).length+(a.dek||"").split(/\s+/).length)/170));
-const topicOf=id=>TOPICS.find(t=>t.id===id)||TOPICS[2];
-const CHECK=`<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.4l3 3 6.6-6.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const CHECK_SM=CHECK.replace('<svg','<svg style="width:1em;height:1em"');
-function toast(m){ document.querySelector(".toast")?.remove(); const el=document.createElement("div"); el.className="toast"; el.setAttribute("role","status"); el.textContent=m; document.body.appendChild(el); setTimeout(()=>el.remove(),2600); }
-function all(){ const m=new Map(articles.map(a=>[a.id,a])); Object.values(saved).forEach(a=>{ if(a?.id&&!m.has(a.id)) m.set(a.id,a); }); return [...m.values()]; }
-const byDate=(a,b)=>String(b.publishedAt).localeCompare(String(a.publishedAt));
-
-/* ---------- decryption ---------- */
-const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-const ub64=u=>btoa(String.fromCharCode(...new Uint8Array(u)));
-function keyFromHash(){ const m=/[#&]k=([a-z0-9-]+)/i.exec(location.hash||""); return m?m[1].toLowerCase():null; }
-async function derive(pass,env){
-  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass.trim().toLowerCase()),"PBKDF2",false,["deriveBits"]);
-  const bits=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:b64(env.salt),iterations:env.iter},base,256);
-  return new Uint8Array(bits);
-}
-async function decryptWith(raw,env){
-  const k=await crypto.subtle.importKey("raw",raw,"AES-GCM",false,["decrypt"]);
-  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(env.iv)},k,b64(env.ct));
-  return JSON.parse(new TextDecoder().decode(pt));
-}
-let env=null;
-async function load(passTyped){
-  if(!window.crypto?.subtle){ locked=true; lockErr="הדפדפן הזה לא תומך בפענוח. נסו דפדפן אחר בטלוויזיה."; render(); return; }
-  try{
-    const res=await fetch("data.enc?t="+Date.now(),{cache:"no-store"});
-    if(!res.ok) throw new Error("http "+res.status);
-    env=await res.json();
-  }catch(e){ if(!articles.length){ locked=false; loaded=true; lockErr=""; renderMsg("לא הצלחתי לטעון את הכתבות","בדקו את החיבור לאינטרנט ונסו לרענן את הדף."); } return; }
-  const pass=passTyped||keyFromHash();
-  let raw=null;
-  try{
-    if(pass){ raw=await derive(pass,env); }
-    else{ const c=lsGet("key"); if(c&&c.salt===env.salt) raw=b64(c.raw); }
-    if(!raw){ locked=true; lockErr=""; render(); return; }
-    const data=await decryptWith(raw,env);
-    lsSet("key",{salt:env.salt,raw:ub64(raw)});
-    articles=(data.articles||[]).sort(byDate); updatedAt=data.updatedAt; loaded=true; locked=false; lockErr="";
-    if(openId) keepReader(); else render();
-  }catch(e){
-    console.warn(e); try{ localStorage.removeItem(LS+".key"); }catch{}
-    locked=true; lockErr= pass?"המפתח לא נכון. בדקו אותו ונסו שוב.":""; render();
+  function lsSet(k, v) {
+    try {
+      localStorage.setItem(LS + "." + k, JSON.stringify(v));
+    } catch (e) {
+    }
   }
-}
-
-/* ---------- rows ---------- */
-function buildRows(){
-  const list=articles.filter(a=>region==="all"||a.region===region).sort(byDate);
-  const out=[]; if(!list.length) return out;
-  const now=Date.now();
-  let fresh=list.filter(a=>Date.parse(a.publishedAt)>=now-36*3600e3);
-  if(fresh.length<6) fresh=list.slice(0,12);
-  out.push({id:"latest",label:"החדשות האחרונות",items:fresh.slice(0,24)});
-  TOPICS.forEach(t=>{ const it=list.filter(a=>a.topic===t.id); if(it.length) out.push({id:"t-"+t.id,label:t.label,items:it.slice(0,30)}); });
-  const recent=list.filter(a=>Date.parse(a.publishedAt)>=now-14*86400e3);
-  CONTEXTS.map(c=>({c,items:recent.filter(a=>c.re.test((a.title||"")+" "+(a.dek||"")))}))
-    .filter(x=>x.items.length>=3)
-    .map(x=>({...x,score:x.items.filter(a=>Date.parse(a.publishedAt)>=now-4*86400e3).length*2+x.items.length}))
-    .sort((a,b)=>b.score-a.score).slice(0,5)
-    .forEach(x=>out.push({id:"c-"+x.c.id,label:x.c.label,ctx:true,items:x.items.slice(0,24)}));
-  const sv=Object.values(saved).filter(a=>region==="all"||a.region===region).sort(byDate);
-  if(sv.length) out.push({id:"saved",label:"שמורים",items:sv});
-  return out;
-}
-
-/* ---------- render ---------- */
-function radarSVG(){
-  return `<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="var(--surface)" stroke="var(--line)"/><circle cx="26" cy="26" r="15" fill="none" stroke="var(--line)"/><path d="M26 2V50M2 26H50" stroke="var(--line)"/><g style="transform-origin:26px 26px;animation:sw 5s linear infinite"><path d="M26 26L26 2A24 24 0 0 1 46.8 14Z" fill="var(--signal)" opacity=".25"/><path d="M26 26L26 2" stroke="var(--signal)" stroke-width="1.6"/></g><style>@keyframes sw{to{transform:rotate(360deg)}}</style></svg>`;
-}
-function renderMsg(title,sub){
-  $("#app").innerHTML=`<div class="lock pad"><div class="lockbox"><div class="brand">${radarSVG()}<b>רדאר</b></div><h2>${esc(title)}</h2><p>${esc(sub)}</p></div></div>`;
-}
-function renderLock(){
-  $("#app").innerHTML=`<div class="lock pad"><div class="lockbox">
-    <div class="brand">${radarSVG()}<b>רדאר</b></div>
-    <p>הכתבות כאן מוצפנות. הקלידו את המפתח פעם אחת, והוא יישמר בדפדפן הזה.</p>
-    <form id="lockF"><input id="lockIn" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="xxxx-xxxx-xxxx-xxxx" aria-label="מפתח"><button class="btn" type="submit">פתיחה</button></form>
-    <p class="err" role="alert">${esc(lockErr)}</p></div></div>`;
-  $("#lockF").onsubmit=e=>{ e.preventDefault(); const v=$("#lockIn").value.trim(); if(v){ lockErr="פותח…"; $(".err").textContent=lockErr; load(v); } };
-  setTimeout(()=>$("#lockIn")?.focus(),50);
-}
-function render(){
-  if(locked){ renderLock(); return; }
-  const keepKey=focusKey();
-  rows=buildRows();
-  const last=updatedAt?`עודכן ${ago(updatedAt)}`:(loaded?"":"טוען…");
-  $("#app").innerHTML=`
-  <header class="top pad">
-    <div class="brand">${radarSVG()}<b>רדאר</b></div>
-    <nav class="tabs" role="tablist" aria-label="אזור">${TABS.map((t,i)=>`<button class="tab" role="tab" data-tab="${i}" aria-selected="${t.id===region}" tabindex="-1">${esc(t.label)}</button>`).join("")}</nav>
-    <span class="updated">${esc(last)}</span>
-  </header>
-  <section class="bill pad" id="bill" aria-live="polite"></section>
-  <main class="rows pad" id="rows">${rows.length? rows.map(rowHTML).join("") : `<div class="empty"><b>${loaded?"אין כאן כתבות כרגע":"טוען כתבות…"}</b></div>`}</main>
-  <footer class="keys pad" aria-hidden="true"><span><kbd>▲▼</kbd>מעבר בין שורות</span><span><kbd>◀▶</kbd>מעבר בין כתבות</span><span><kbd>OK</kbd>פתיחת הכתבה</span><span><kbd>חזרה</kbd>יציאה מכתבה</span></footer>
-  ${openId?readerHTML():""}`;
-  bindHome();
-  if(openId){ bindReader(); return; }
-  restoreFocus(keepKey);
-}
-function rowHTML(r,ri){
-  return `<section class="row" data-row="${ri}" aria-label="${esc(r.label)}">
-    <div class="rowhead">${r.ctx?`<span class="ctx">הקשר</span>`:""}<h3>${esc(r.label)}</h3></div>
-    <div class="track">${r.items.map((a,ci)=>cardHTML(a,ri,ci)).join("")}</div></section>`;
-}
-function cardHTML(a,ri,ci){
-  const t=topicOf(a.topic), read=!!readMap[a.id];
-  return `<button class="card${read?" read":""}" data-r="${ri}" data-c="${ci}" data-id="${esc(a.id)}" tabindex="-1" aria-label="${esc(a.title)}${read?" (נקרא)":""}">
-    <span class="pill" style="--c:var(${t.color})"><i></i>${esc(t.label)}${region==="all"?` · ${esc(REGIONS[a.region]?.label||"")}`:""}</span>
-    <h4>${esc(a.title)}</h4>
-    <span class="meta"><span>${esc(a.source)}</span><span>· ${esc(ago(a.publishedAt))}</span></span>
-    ${read?`<span class="check" title="נקרא">${CHECK}</span>`:""}
-  </button>`;
-}
-function billHTML(a){
-  if(!a) return `<h2>${loaded?"אין כתבות להצגה":"טוען…"}</h2>`;
-  const t=topicOf(a.topic), read=!!readMap[a.id];
-  return `<div class="kick"><span class="pill" style="--c:var(${t.color})"><i></i>${esc(t.label)}</span><span class="reg">${esc(REGIONS[a.region]?.label||"")}</span><span>${esc(a.source)}</span><span>· ${esc(ago(a.publishedAt))}</span><span>· ${readMins(a)} דק׳ קריאה</span>${read?`<span class="done">${CHECK_SM}קראת</span>`:""}</div>
-    <h2>${esc(a.title)}</h2><p class="dek">${esc(a.dek)}</p><span class="hintok">OK לקריאת הכתבה המלאה</span>`;
-}
-function setBill(a){ const b=$("#bill"); if(!b) return; b.style.setProperty("--c",`var(${topicOf(a?.topic).color})`); b.innerHTML=billHTML(a); }
-
-/* ---------- focus & navigation ---------- */
-function focusKey(){ const el=document.activeElement; if(el?.classList?.contains("card")) return {row:rows[+el.dataset.r]?.id,id:el.dataset.id}; if(el?.classList?.contains("tab")) return {tab:true}; return null; }
-function restoreFocus(k){
-  if(k?.tab){ focusTab(tabIdx); return; }
-  if(k?.row){ const ri=rows.findIndex(r=>r.id===k.row); if(ri>=0){ const ci=rows[ri].items.findIndex(a=>a.id===k.id); if(ci>=0){ focusCard(ri,ci,true); return; } } }
-  if(rows.length){ const ri=Math.min(Math.max(zone-1,0),rows.length-1); focusCard(ri,Math.min(colIdx[rows[ri].id]||0,rows[ri].items.length-1),true); }
-  else setBill(null);
-}
-function focusTab(i){ zone=0; tabIdx=(i+TABS.length)%TABS.length; document.querySelector(`[data-tab="${tabIdx}"]`)?.focus({preventScroll:true}); $("#rows")?.scrollTo({top:0}); setBill(rows[0]?.items[0]); }
-function focusCard(ri,ci,instant){
-  const r=rows[ri]; if(!r) return; ci=Math.max(0,Math.min(ci,r.items.length-1));
-  zone=ri+1; colIdx[r.id]=ci;
-  const el=document.querySelector(`.card[data-r="${ri}"][data-c="${ci}"]`); if(!el) return;
-  el.focus({preventScroll:true});
-  const rowsEl=$("#rows"), rowEl=el.closest(".row");
-  rowsEl.scrollTo({top:ri===0?0:Math.max(0,rowEl.offsetTop-8), behavior:instant?"auto":undefined});
-  const track=el.parentElement, tr=track.getBoundingClientRect(), er=el.getBoundingClientRect(), padPx=parseFloat(getComputedStyle(document.documentElement).fontSize)*2.6;
-  if(er.left<tr.left+padPx) track.scrollBy({left:er.left-tr.left-padPx, behavior:instant?"auto":undefined});
-  else if(er.right>tr.right-padPx) track.scrollBy({left:er.right-tr.right+padPx, behavior:instant?"auto":undefined});
-  setBill(r.items[ci]);
-}
-function setRegion(i){ tabIdx=i; region=TABS[i].id; lsSet("ui",{region}); colIdx={}; zone=0; render(); focusTab(i); }
-function bindHome(){
-  document.querySelectorAll("[data-tab]").forEach(b=>{ b.onclick=()=>setRegion(+b.dataset.tab); });
-  document.querySelectorAll(".card").forEach(c=>{
-    const ri=+c.dataset.r, ci=+c.dataset.c;
-    c.onclick=()=>openArticle(c.dataset.id, rows[ri]?.id);
-    c.onfocus=()=>{ zone=ri+1; colIdx[rows[ri].id]=ci; setBill(rows[ri].items[ci]); };
-    c.onmouseenter=()=>{ if(matchMedia("(hover:hover)").matches) setBill(rows[ri].items[ci]); };
+  const $ = (s) => document.querySelector(s), esc = (s) => String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]), rtf = (() => {
+    try {
+      return new Intl.RelativeTimeFormat("he", { numeric: "auto" });
+    } catch (e) {
+      return null;
+    }
+  })();
+  function ago(iso) {
+    const t = Date.parse(iso);
+    if (!t) return "";
+    const s = (t - Date.now()) / 1e3, a = Math.abs(s);
+    if (rtf) {
+      if (a < 3600) return rtf.format(Math.round(s / 60), "minute");
+      if (a < 86400) return rtf.format(Math.round(s / 3600), "hour");
+      if (a < 86400 * 7) return rtf.format(Math.round(s / 86400), "day");
+    }
+    return new Date(t).toLocaleDateString("he-IL", { day: "numeric", month: "long" });
+  }
+  const fullDate = (iso) => {
+    const t = Date.parse(iso);
+    return t ? new Date(t).toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long" }) : "";
+  }, readMins = (a) => Math.max(1, Math.round(((a.body || []).join(" ").split(/\s+/).length + (a.dek || "").split(/\s+/).length) / 170)), topicOf = (id) => TOPICS.find((t) => t.id === id) || TOPICS[2], CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.4l3 3 6.6-6.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>', CHECK_SM = CHECK.replace("<svg", '<svg style="width:1em;height:1em"');
+  function toast(m) {
+    var _a;
+    (_a = document.querySelector(".toast")) == null || _a.remove();
+    const el = document.createElement("div");
+    el.className = "toast", el.setAttribute("role", "status"), el.textContent = m, document.body.appendChild(el), setTimeout(() => el.remove(), 2600);
+  }
+  function all() {
+    const m = new Map(articles.map((a) => [a.id, a]));
+    return Object.values(saved).forEach((a) => {
+      a != null && a.id && !m.has(a.id) && m.set(a.id, a);
+    }), [...m.values()];
+  }
+  const byDate = (a, b) => String(b.publishedAt).localeCompare(String(a.publishedAt)), b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0)), ub64 = (u) => btoa(String.fromCharCode(...new Uint8Array(u)));
+  function keyFromHash() {
+    const m = /[#&]k=([a-z0-9-]+)/i.exec(location.hash || "");
+    return m ? m[1].toLowerCase() : null;
+  }
+  async function derive(pass, env2) {
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass.trim().toLowerCase()), "PBKDF2", !1, ["deriveBits"]), bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: b64(env2.salt), iterations: env2.iter }, base, 256);
+    return new Uint8Array(bits);
+  }
+  async function decryptWith(raw, env2) {
+    const k = await crypto.subtle.importKey("raw", raw, "AES-GCM", !1, ["decrypt"]), pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(env2.iv) }, k, b64(env2.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  let env = null;
+  async function load(passTyped) {
+    var _a;
+    if (!((_a = window.crypto) != null && _a.subtle)) {
+      locked = !0, lockErr = "\u05D4\u05D3\u05E4\u05D3\u05E4\u05DF \u05D4\u05D6\u05D4 \u05DC\u05D0 \u05EA\u05D5\u05DE\u05DA \u05D1\u05E4\u05E2\u05E0\u05D5\u05D7. \u05E0\u05E1\u05D5 \u05D3\u05E4\u05D3\u05E4\u05DF \u05D0\u05D7\u05E8 \u05D1\u05D8\u05DC\u05D5\u05D5\u05D9\u05D6\u05D9\u05D4.", render();
+      return;
+    }
+    try {
+      const res = await fetch("data.enc?t=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("http " + res.status);
+      env = await res.json();
+    } catch (e) {
+      articles.length || (locked = !1, loaded = !0, lockErr = "", renderMsg("\u05DC\u05D0 \u05D4\u05E6\u05DC\u05D7\u05EA\u05D9 \u05DC\u05D8\u05E2\u05D5\u05DF \u05D0\u05EA \u05D4\u05DB\u05EA\u05D1\u05D5\u05EA", "\u05D1\u05D3\u05E7\u05D5 \u05D0\u05EA \u05D4\u05D7\u05D9\u05D1\u05D5\u05E8 \u05DC\u05D0\u05D9\u05E0\u05D8\u05E8\u05E0\u05D8 \u05D5\u05E0\u05E1\u05D5 \u05DC\u05E8\u05E2\u05E0\u05DF \u05D0\u05EA \u05D4\u05D3\u05E3."));
+      return;
+    }
+    const pass = passTyped || keyFromHash();
+    let raw = null;
+    try {
+      if (pass)
+        raw = await derive(pass, env);
+      else {
+        const c = lsGet("key");
+        c && c.salt === env.salt && (raw = b64(c.raw));
+      }
+      if (!raw) {
+        locked = !0, lockErr = "", render();
+        return;
+      }
+      const data = await decryptWith(raw, env);
+      lsSet("key", { salt: env.salt, raw: ub64(raw) }), articles = (data.articles || []).sort(byDate), updatedAt = data.updatedAt, loaded = !0, locked = !1, lockErr = "", openId ? keepReader() : render();
+    } catch (e) {
+      console.warn(e);
+      try {
+        localStorage.removeItem(LS + ".key");
+      } catch (e2) {
+      }
+      locked = !0, lockErr = pass ? "\u05D4\u05DE\u05E4\u05EA\u05D7 \u05DC\u05D0 \u05E0\u05DB\u05D5\u05DF. \u05D1\u05D3\u05E7\u05D5 \u05D0\u05D5\u05EA\u05D5 \u05D5\u05E0\u05E1\u05D5 \u05E9\u05D5\u05D1." : "", render();
+    }
+  }
+  function buildRows() {
+    const list = articles.filter((a) => region === "all" || a.region === region).sort(byDate), out = [];
+    if (!list.length) return out;
+    const now = Date.now();
+    let fresh = list.filter((a) => Date.parse(a.publishedAt) >= now - 36 * 36e5);
+    fresh.length < 6 && (fresh = list.slice(0, 12)), out.push({ id: "latest", label: "\u05D4\u05D7\u05D3\u05E9\u05D5\u05EA \u05D4\u05D0\u05D7\u05E8\u05D5\u05E0\u05D5\u05EA", items: fresh.slice(0, 24) }), TOPICS.forEach((t) => {
+      const it = list.filter((a) => a.topic === t.id);
+      it.length && out.push({ id: "t-" + t.id, label: t.label, items: it.slice(0, 30) });
+    });
+    const recent = list.filter((a) => Date.parse(a.publishedAt) >= now - 14 * 864e5);
+    CONTEXTS.map((c) => ({ c, items: recent.filter((a) => c.re.test((a.title || "") + " " + (a.dek || ""))) })).filter((x) => x.items.length >= 3).map((x) => __spreadProps(__spreadValues({}, x), { score: x.items.filter((a) => Date.parse(a.publishedAt) >= now - 4 * 864e5).length * 2 + x.items.length })).sort((a, b) => b.score - a.score).slice(0, 5).forEach((x) => out.push({ id: "c-" + x.c.id, label: x.c.label, ctx: !0, items: x.items.slice(0, 24) }));
+    const sv = Object.values(saved).filter((a) => region === "all" || a.region === region).sort(byDate);
+    return sv.length && out.push({ id: "saved", label: "\u05E9\u05DE\u05D5\u05E8\u05D9\u05DD", items: sv }), out;
+  }
+  function radarSVG() {
+    return '<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="var(--surface)" stroke="var(--line)"/><circle cx="26" cy="26" r="15" fill="none" stroke="var(--line)"/><path d="M26 2V50M2 26H50" stroke="var(--line)"/><g style="transform-origin:26px 26px;animation:sw 5s linear infinite"><path d="M26 26L26 2A24 24 0 0 1 46.8 14Z" fill="var(--signal)" opacity=".25"/><path d="M26 26L26 2" stroke="var(--signal)" stroke-width="1.6"/></g><style>@keyframes sw{to{transform:rotate(360deg)}}</style></svg>';
+  }
+  function renderMsg(title, sub) {
+    $("#app").innerHTML = '<div class="lock pad"><div class="lockbox"><div class="brand">'.concat(radarSVG(), "<b>\u05E8\u05D3\u05D0\u05E8</b></div><h2>").concat(esc(title), "</h2><p>").concat(esc(sub), "</p></div></div>");
+  }
+  function renderLock() {
+    $("#app").innerHTML = '<div class="lock pad"><div class="lockbox">\n    <div class="brand">'.concat(radarSVG(), '<b>\u05E8\u05D3\u05D0\u05E8</b></div>\n    <p>\u05D4\u05DB\u05EA\u05D1\u05D5\u05EA \u05DB\u05D0\u05DF \u05DE\u05D5\u05E6\u05E4\u05E0\u05D5\u05EA. \u05D4\u05E7\u05DC\u05D9\u05D3\u05D5 \u05D0\u05EA \u05D4\u05DE\u05E4\u05EA\u05D7 \u05E4\u05E2\u05DD \u05D0\u05D7\u05EA, \u05D5\u05D4\u05D5\u05D0 \u05D9\u05D9\u05E9\u05DE\u05E8 \u05D1\u05D3\u05E4\u05D3\u05E4\u05DF \u05D4\u05D6\u05D4.</p>\n    <form id="lockF"><input id="lockIn" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="xxxx-xxxx-xxxx-xxxx" aria-label="\u05DE\u05E4\u05EA\u05D7"><button class="btn" type="submit">\u05E4\u05EA\u05D9\u05D7\u05D4</button></form>\n    <p class="err" role="alert">').concat(esc(lockErr), "</p></div></div>"), $("#lockF").onsubmit = (e) => {
+      e.preventDefault();
+      const v = $("#lockIn").value.trim();
+      v && (lockErr = "\u05E4\u05D5\u05EA\u05D7\u2026", $(".err").textContent = lockErr, load(v));
+    }, setTimeout(() => {
+      var _a;
+      return (_a = $("#lockIn")) == null ? void 0 : _a.focus();
+    }, 50);
+  }
+  function render() {
+    if (locked) {
+      renderLock();
+      return;
+    }
+    const keepKey = focusKey();
+    rows = buildRows();
+    const last = updatedAt ? "\u05E2\u05D5\u05D3\u05DB\u05DF ".concat(ago(updatedAt)) : loaded ? "" : "\u05D8\u05D5\u05E2\u05DF\u2026";
+    if ($("#app").innerHTML = '\n  <header class="top pad">\n    <div class="brand">'.concat(radarSVG(), '<b>\u05E8\u05D3\u05D0\u05E8</b></div>\n    <nav class="tabs" role="tablist" aria-label="\u05D0\u05D6\u05D5\u05E8">').concat(TABS.map((t, i) => '<button class="tab" role="tab" data-tab="'.concat(i, '" aria-selected="').concat(t.id === region, '" tabindex="-1">').concat(esc(t.label), "</button>")).join(""), '</nav>\n    <span class="updated">').concat(esc(last), '</span>\n  </header>\n  <section class="bill pad" id="bill" aria-live="polite"></section>\n  <main class="rows pad" id="rows">').concat(rows.length ? rows.map(rowHTML).join("") : '<div class="empty"><b>'.concat(loaded ? "\u05D0\u05D9\u05DF \u05DB\u05D0\u05DF \u05DB\u05EA\u05D1\u05D5\u05EA \u05DB\u05E8\u05D2\u05E2" : "\u05D8\u05D5\u05E2\u05DF \u05DB\u05EA\u05D1\u05D5\u05EA\u2026", "</b></div>"), '</main>\n  <footer class="keys pad" aria-hidden="true"><span><kbd>\u25B2\u25BC</kbd>\u05DE\u05E2\u05D1\u05E8 \u05D1\u05D9\u05DF \u05E9\u05D5\u05E8\u05D5\u05EA</span><span><kbd>\u25C0\u25B6</kbd>\u05DE\u05E2\u05D1\u05E8 \u05D1\u05D9\u05DF \u05DB\u05EA\u05D1\u05D5\u05EA</span><span><kbd>OK</kbd>\u05E4\u05EA\u05D9\u05D7\u05EA \u05D4\u05DB\u05EA\u05D1\u05D4</span><span><kbd>\u05D7\u05D6\u05E8\u05D4</kbd>\u05D9\u05E6\u05D9\u05D0\u05D4 \u05DE\u05DB\u05EA\u05D1\u05D4</span></footer>\n  ').concat(openId ? readerHTML() : ""), bindHome(), openId) {
+      bindReader();
+      return;
+    }
+    restoreFocus(keepKey);
+  }
+  function rowHTML(r, ri) {
+    return '<section class="row" data-row="'.concat(ri, '" aria-label="').concat(esc(r.label), '">\n    <div class="rowhead">').concat(r.ctx ? '<span class="ctx">\u05D4\u05E7\u05E9\u05E8</span>' : "", "<h3>").concat(esc(r.label), '</h3></div>\n    <div class="track">').concat(r.items.map((a, ci) => cardHTML(a, ri, ci)).join(""), "</div></section>");
+  }
+  function cardHTML(a, ri, ci) {
+    var _a;
+    const t = topicOf(a.topic), read = !!readMap[a.id];
+    return '<button class="card'.concat(read ? " read" : "", '" data-r="').concat(ri, '" data-c="').concat(ci, '" data-id="').concat(esc(a.id), '" tabindex="-1" aria-label="').concat(esc(a.title)).concat(read ? " (\u05E0\u05E7\u05E8\u05D0)" : "", '">\n    <span class="pill" style="--c:var(').concat(t.color, ')"><i></i>').concat(esc(t.label)).concat(region === "all" ? " \xB7 ".concat(esc(((_a = REGIONS[a.region]) == null ? void 0 : _a.label) || "")) : "", "</span>\n    <h4>").concat(esc(a.title), '</h4>\n    <span class="meta"><span>').concat(esc(a.source), "</span><span>\xB7 ").concat(esc(ago(a.publishedAt)), "</span></span>\n    ").concat(read ? '<span class="check" title="\u05E0\u05E7\u05E8\u05D0">'.concat(CHECK, "</span>") : "", "\n  </button>");
+  }
+  function billHTML(a) {
+    var _a;
+    if (!a) return "<h2>".concat(loaded ? "\u05D0\u05D9\u05DF \u05DB\u05EA\u05D1\u05D5\u05EA \u05DC\u05D4\u05E6\u05D2\u05D4" : "\u05D8\u05D5\u05E2\u05DF\u2026", "</h2>");
+    const t = topicOf(a.topic), read = !!readMap[a.id];
+    return '<div class="kick"><span class="pill" style="--c:var('.concat(t.color, ')"><i></i>').concat(esc(t.label), '</span><span class="reg">').concat(esc(((_a = REGIONS[a.region]) == null ? void 0 : _a.label) || ""), "</span><span>").concat(esc(a.source), "</span><span>\xB7 ").concat(esc(ago(a.publishedAt)), "</span><span>\xB7 ").concat(readMins(a), " \u05D3\u05E7\u05F3 \u05E7\u05E8\u05D9\u05D0\u05D4</span>").concat(read ? '<span class="done">'.concat(CHECK_SM, "\u05E7\u05E8\u05D0\u05EA</span>") : "", "</div>\n    <h2>").concat(esc(a.title), '</h2><p class="dek">').concat(esc(a.dek), '</p><span class="hintok">OK \u05DC\u05E7\u05E8\u05D9\u05D0\u05EA \u05D4\u05DB\u05EA\u05D1\u05D4 \u05D4\u05DE\u05DC\u05D0\u05D4</span>');
+  }
+  function setBill(a) {
+    const b = $("#bill");
+    b && (b.style.setProperty("--c", "var(".concat(topicOf(a == null ? void 0 : a.topic).color, ")")), b.innerHTML = billHTML(a));
+  }
+  function focusKey() {
+    var _a, _b, _c;
+    const el = document.activeElement;
+    return (_a = el == null ? void 0 : el.classList) != null && _a.contains("card") ? { row: (_b = rows[+el.dataset.r]) == null ? void 0 : _b.id, id: el.dataset.id } : (_c = el == null ? void 0 : el.classList) != null && _c.contains("tab") ? { tab: !0 } : null;
+  }
+  function restoreFocus(k) {
+    if (k != null && k.tab) {
+      focusTab(tabIdx);
+      return;
+    }
+    if (k != null && k.row) {
+      const ri = rows.findIndex((r) => r.id === k.row);
+      if (ri >= 0) {
+        const ci = rows[ri].items.findIndex((a) => a.id === k.id);
+        if (ci >= 0) {
+          focusCard(ri, ci, !0);
+          return;
+        }
+      }
+    }
+    if (rows.length) {
+      const ri = Math.min(Math.max(zone - 1, 0), rows.length - 1);
+      focusCard(ri, Math.min(colIdx[rows[ri].id] || 0, rows[ri].items.length - 1), !0);
+    } else setBill(null);
+  }
+  function focusTab(i) {
+    var _a, _b, _c;
+    zone = 0, tabIdx = (i + TABS.length) % TABS.length, (_a = document.querySelector('[data-tab="'.concat(tabIdx, '"]'))) == null || _a.focus({ preventScroll: !0 }), (_b = $("#rows")) == null || _b.scrollTo({ top: 0 }), setBill((_c = rows[0]) == null ? void 0 : _c.items[0]);
+  }
+  function focusCard(ri, ci, instant) {
+    const r = rows[ri];
+    if (!r) return;
+    ci = Math.max(0, Math.min(ci, r.items.length - 1)), zone = ri + 1, colIdx[r.id] = ci;
+    const el = document.querySelector('.card[data-r="'.concat(ri, '"][data-c="').concat(ci, '"]'));
+    if (!el) return;
+    el.focus({ preventScroll: !0 });
+    const rowsEl = $("#rows"), rowEl = el.closest(".row");
+    rowsEl.scrollTo({ top: ri === 0 ? 0 : Math.max(0, rowEl.offsetTop - 8), behavior: instant ? "auto" : void 0 });
+    const track = el.parentElement, tr = track.getBoundingClientRect(), er = el.getBoundingClientRect(), padPx = parseFloat(getComputedStyle(document.documentElement).fontSize) * 2.6;
+    er.left < tr.left + padPx ? track.scrollBy({ left: er.left - tr.left - padPx, behavior: instant ? "auto" : void 0 }) : er.right > tr.right - padPx && track.scrollBy({ left: er.right - tr.right + padPx, behavior: instant ? "auto" : void 0 }), setBill(r.items[ci]);
+  }
+  function setRegion(i) {
+    tabIdx = i, region = TABS[i].id, lsSet("ui", { region }), colIdx = {}, zone = 0, render(), focusTab(i);
+  }
+  function bindHome() {
+    document.querySelectorAll("[data-tab]").forEach((b) => {
+      b.onclick = () => setRegion(+b.dataset.tab);
+    }), document.querySelectorAll(".card").forEach((c) => {
+      const ri = +c.dataset.r, ci = +c.dataset.c;
+      c.onclick = () => {
+        var _a;
+        return openArticle(c.dataset.id, (_a = rows[ri]) == null ? void 0 : _a.id);
+      }, c.onfocus = () => {
+        zone = ri + 1, colIdx[rows[ri].id] = ci, setBill(rows[ri].items[ci]);
+      }, c.onmouseenter = () => {
+        matchMedia("(hover:hover)").matches && setBill(rows[ri].items[ci]);
+      };
+    });
+  }
+  const BACK_KEYS = /* @__PURE__ */ new Set(["Escape", "Backspace", "GoBack", "BrowserBack", "XF86Back"]);
+  document.addEventListener("keydown", (e) => {
+    var _a;
+    if (locked || ((_a = e.target) == null ? void 0 : _a.tagName) === "INPUT") return;
+    const k = e.key, isBack = BACK_KEYS.has(k) || e.keyCode === 461 || e.keyCode === 10009;
+    if (openId) {
+      readerKeys(e, k, isBack);
+      return;
+    }
+    if (isBack) {
+      zone !== 0 && (e.preventDefault(), focusTab(tabIdx));
+      return;
+    }
+    const dir = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" }[k];
+    if (!dir) return;
+    if (e.preventDefault(), wake(), zone === 0) {
+      dir === "left" ? focusTab(tabIdx + 1) : dir === "right" ? focusTab(tabIdx - 1) : dir === "down" && rows.length && focusCard(0, colIdx[rows[0].id] || 0);
+      return;
+    }
+    const ri = zone - 1, r = rows[ri];
+    if (!r) {
+      focusTab(tabIdx);
+      return;
+    }
+    const ci = colIdx[r.id] || 0;
+    dir === "left" ? focusCard(ri, ci + 1) : dir === "right" ? focusCard(ri, ci - 1) : dir === "up" ? ri === 0 ? focusTab(tabIdx) : focusCard(ri - 1, colIdx[rows[ri - 1].id] || 0) : dir === "down" && ri < rows.length - 1 && focusCard(ri + 1, colIdx[rows[ri + 1].id] || 0);
   });
-}
-const BACK_KEYS=new Set(["Escape","Backspace","GoBack","BrowserBack","XF86Back"]);
-document.addEventListener("keydown",e=>{
-  if(locked||e.target?.tagName==="INPUT") return;
-  const k=e.key, isBack=BACK_KEYS.has(k)||e.keyCode===461||e.keyCode===10009;
-  if(openId){ readerKeys(e,k,isBack); return; }
-  if(isBack){ if(zone!==0){ e.preventDefault(); focusTab(tabIdx); } return; }
-  const dir={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"}[k]; if(!dir) return;
-  e.preventDefault(); wake();
-  if(zone===0){
-    if(dir==="left") focusTab(tabIdx+1); else if(dir==="right") focusTab(tabIdx-1);
-    else if(dir==="down"&&rows.length) focusCard(0,colIdx[rows[0].id]||0);
-    return;
+  function nextOf(id) {
+    var _a;
+    const it = ((_a = rows.find((r) => r.id === openFrom)) == null ? void 0 : _a.items) || [], i = it.findIndex((a) => a.id === id);
+    return i >= 0 && i < it.length - 1 ? it[i + 1] : null;
   }
-  const ri=zone-1, r=rows[ri]; if(!r){ focusTab(tabIdx); return; }
-  const ci=colIdx[r.id]||0;
-  if(dir==="left") focusCard(ri,ci+1);
-  else if(dir==="right") focusCard(ri,ci-1);
-  else if(dir==="up"){ if(ri===0) focusTab(tabIdx); else focusCard(ri-1,colIdx[rows[ri-1].id]||0); }
-  else if(dir==="down"&&ri<rows.length-1) focusCard(ri+1,colIdx[rows[ri+1].id]||0);
-});
-
-/* ---------- reader ---------- */
-function nextOf(id){ const it=rows.find(r=>r.id===openFrom)?.items||[]; const i=it.findIndex(a=>a.id===id); return i>=0&&i<it.length-1? it[i+1] : null; }
-function readerHTML(){
-  const a=all().find(x=>x.id===openId); if(!a) return "";
-  const t=topicOf(a.topic), read=!!readMap[a.id], isSaved=!!saved[a.id], nx=nextOf(a.id);
-  return `<div class="reader" id="reader" role="dialog" aria-label="${esc(a.title)}">
-    <div><div class="rbar pad">
-      <button class="btn rb" id="back">→ חזרה</button><span class="sp"></span>
-      <button class="btn rb" id="readBtn" aria-pressed="${read}">${read?`${CHECK_SM} נקרא`:"סמן כנקרא"}</button>
-      <button class="btn rb" id="saveBtn" aria-pressed="${isSaved}">${isSaved?"שמור ✓":"שמור"}</button>
-      ${a.sourceUrl?`<a class="btn rb" href="${esc(a.sourceUrl)}" target="_blank" rel="noopener noreferrer">למקור ↗</a>`:""}
-    </div><div class="progress" id="prog"></div></div>
-    <div class="scroller pad" id="scroller"><article class="article">
-      <div class="kick"><span class="pill" style="--c:var(${t.color})"><i></i>${esc(t.label)}</span><span class="reg">${esc(REGIONS[a.region]?.label||"")}</span></div>
-      <h1>${esc(a.title)}</h1>
-      <div class="byline"><span>${esc(a.source)}${a.author?` · ${esc(a.author)}`:""}</span><span>${esc(fullDate(a.publishedAt))}</span><span>${readMins(a)} דק׳ קריאה</span></div>
-      ${a.dek?`<section class="summary"><span class="label">תקציר</span><p>${esc(a.dek)}</p></section>`:""}
-      <div class="divider">הכתבה המלאה</div>
-      <div class="body">${(a.body||[]).map(p=>`<p>${esc(p)}</p>`).join("")}</div>
-      ${nx?`<button class="next rb" id="nextBtn" data-id="${esc(nx.id)}"><span>הכתבה הבאה בשורה</span><b>${esc(nx.title)}</b></button>`:""}
-      <footer class="src"><span>סיכום מורחב בעברית שכתב Claude על בסיס הכתבה המקורית ב-${esc(a.source)}.</span></footer>
-    </article></div></div>`;
-}
-function markRead(id){ if(!readMap[id]){ readMap[id]=Date.now(); saveRead(); } }
-function openArticle(id,from){
-  openFrom=from||openFrom; openId=id; markRead(id);
-  try{ history.pushState({radar:id},""); }catch{}
-  render(); wake();
-}
-function closeArticle(viaHistory){
-  const id=openId; openId=null;
-  if(!viaHistory){ try{ if(history.state?.radar) history.back(); }catch{} }
-  render();
-  const ri=rows.findIndex(r=>r.id===openFrom); if(ri>=0){ const ci=rows[ri].items.findIndex(a=>a.id===id); if(ci>=0) focusCard(ri,ci,true); }
-}
-window.addEventListener("popstate",()=>{ if(openId&&!history.state?.radar) closeArticle(true); });
-let rIdx=0;
-const rbs=()=>[...document.querySelectorAll("#reader .rb")];
-function focusR(i){ const l=rbs(); if(!l.length) return; rIdx=(i+l.length)%l.length; const el=l[rIdx]; el.focus({preventScroll:true}); if(!el.closest(".rbar")) el.scrollIntoView({block:"nearest"}); }
-function bindReader(){
-  $("#back").onclick=()=>closeArticle(false);
-  $("#readBtn").onclick=()=>{ if(readMap[openId]) delete readMap[openId]; else readMap[openId]=Date.now(); saveRead(); keepReader(); };
-  $("#saveBtn").onclick=()=>{ const a=all().find(x=>x.id===openId); if(!a) return; if(saved[a.id]){ delete saved[a.id]; toast("הוסר מהשמורים"); } else { saved[a.id]=a; toast("נשמר"); } lsSet("saved",saved); keepReader(); };
-  $("#nextBtn")&&($("#nextBtn").onclick=e=>{ const id=e.currentTarget.dataset.id; openId=id; markRead(id); try{ history.replaceState({radar:id},""); }catch{} render(); });
-  const sc=$("#scroller"); sc.onscroll=()=>{ const p=sc.scrollTop/Math.max(1,sc.scrollHeight-sc.clientHeight); $("#prog").style.width=(p*100)+"%"; };
-  rIdx=0; focusR(0);
-}
-function keepReader(){ const st=$("#scroller")?.scrollTop||0, i=rIdx; render(); if($("#scroller")) $("#scroller").scrollTop=st; focusR(i); }
-function readerKeys(e,k,isBack){
-  const sc=$("#scroller"); if(!sc) return;
-  if(isBack){ e.preventDefault(); closeArticle(false); return; }
-  const step=sc.clientHeight*0.45;
-  if(k==="ArrowDown"||k==="PageDown"){ e.preventDefault(); sc.scrollBy({top:k==="PageDown"?sc.clientHeight*0.9:step}); }
-  else if(k==="ArrowUp"||k==="PageUp"){ e.preventDefault(); sc.scrollBy({top:-(k==="PageUp"?sc.clientHeight*0.9:step)}); }
-  else if(k==="ArrowLeft"){ e.preventDefault(); focusR(rIdx+1); }
-  else if(k==="ArrowRight"){ e.preventDefault(); focusR(rIdx-1); }
-}
-
-/* ---------- persistence ---------- */
-function saveRead(){ const ent=Object.entries(readMap); if(ent.length>1500) readMap=Object.fromEntries(ent.sort((a,b)=>b[1]-a[1]).slice(0,1500)); lsSet("read",readMap); }
-let lock=null;
-async function wake(){ try{ if(!lock&&navigator.wakeLock&&document.visibilityState==="visible"){ lock=await navigator.wakeLock.request("screen"); lock.addEventListener("release",()=>lock=null); } }catch{} }
-
-/* ---------- boot ---------- */
-render();
-load();
-window.addEventListener("hashchange",()=>{ if(keyFromHash()) load(); });
-setInterval(()=>{ if(!openId&&!locked&&document.visibilityState==="visible") load(); },20*60*1000);
+  function readerHTML() {
+    var _a;
+    const a = all().find((x) => x.id === openId);
+    if (!a) return "";
+    const t = topicOf(a.topic), read = !!readMap[a.id], isSaved = !!saved[a.id], nx = nextOf(a.id);
+    return '<div class="reader" id="reader" role="dialog" aria-label="'.concat(esc(a.title), '">\n    <div><div class="rbar pad">\n      <button class="btn rb" id="back">\u2192 \u05D7\u05D6\u05E8\u05D4</button><span class="sp"></span>\n      <button class="btn rb" id="readBtn" aria-pressed="').concat(read, '">').concat(read ? "".concat(CHECK_SM, " \u05E0\u05E7\u05E8\u05D0") : "\u05E1\u05DE\u05DF \u05DB\u05E0\u05E7\u05E8\u05D0", '</button>\n      <button class="btn rb" id="saveBtn" aria-pressed="').concat(isSaved, '">').concat(isSaved ? "\u05E9\u05DE\u05D5\u05E8 \u2713" : "\u05E9\u05DE\u05D5\u05E8", "</button>\n      ").concat(a.sourceUrl ? '<a class="btn rb" href="'.concat(esc(a.sourceUrl), '" target="_blank" rel="noopener noreferrer">\u05DC\u05DE\u05E7\u05D5\u05E8 \u2197</a>') : "", '\n    </div><div class="progress" id="prog"></div></div>\n    <div class="scroller pad" id="scroller"><article class="article">\n      <div class="kick"><span class="pill" style="--c:var(').concat(t.color, ')"><i></i>').concat(esc(t.label), '</span><span class="reg">').concat(esc(((_a = REGIONS[a.region]) == null ? void 0 : _a.label) || ""), "</span></div>\n      <h1>").concat(esc(a.title), '</h1>\n      <div class="byline"><span>').concat(esc(a.source)).concat(a.author ? " \xB7 ".concat(esc(a.author)) : "", "</span><span>").concat(esc(fullDate(a.publishedAt)), "</span><span>").concat(readMins(a), " \u05D3\u05E7\u05F3 \u05E7\u05E8\u05D9\u05D0\u05D4</span></div>\n      ").concat(a.dek ? '<section class="summary"><span class="label">\u05EA\u05E7\u05E6\u05D9\u05E8</span><p>'.concat(esc(a.dek), "</p></section>") : "", '\n      <div class="divider">\u05D4\u05DB\u05EA\u05D1\u05D4 \u05D4\u05DE\u05DC\u05D0\u05D4</div>\n      <div class="body">').concat((a.body || []).map((p) => "<p>".concat(esc(p), "</p>")).join(""), "</div>\n      ").concat(nx ? '<button class="next rb" id="nextBtn" data-id="'.concat(esc(nx.id), '"><span>\u05D4\u05DB\u05EA\u05D1\u05D4 \u05D4\u05D1\u05D0\u05D4 \u05D1\u05E9\u05D5\u05E8\u05D4</span><b>').concat(esc(nx.title), "</b></button>") : "", '\n      <footer class="src"><span>\u05E1\u05D9\u05DB\u05D5\u05DD \u05DE\u05D5\u05E8\u05D7\u05D1 \u05D1\u05E2\u05D1\u05E8\u05D9\u05EA \u05E9\u05DB\u05EA\u05D1 Claude \u05E2\u05DC \u05D1\u05E1\u05D9\u05E1 \u05D4\u05DB\u05EA\u05D1\u05D4 \u05D4\u05DE\u05E7\u05D5\u05E8\u05D9\u05EA \u05D1-').concat(esc(a.source), ".</span></footer>\n    </article></div></div>");
+  }
+  function markRead(id) {
+    readMap[id] || (readMap[id] = Date.now(), saveRead());
+  }
+  function openArticle(id, from) {
+    openFrom = from || openFrom, openId = id, markRead(id);
+    try {
+      history.pushState({ radar: id }, "");
+    } catch (e) {
+    }
+    render(), wake();
+  }
+  function closeArticle(viaHistory) {
+    var _a;
+    const id = openId;
+    if (openId = null, !viaHistory)
+      try {
+        (_a = history.state) != null && _a.radar && history.back();
+      } catch (e) {
+      }
+    render();
+    const ri = rows.findIndex((r) => r.id === openFrom);
+    if (ri >= 0) {
+      const ci = rows[ri].items.findIndex((a) => a.id === id);
+      ci >= 0 && focusCard(ri, ci, !0);
+    }
+  }
+  window.addEventListener("popstate", () => {
+    var _a;
+    openId && !((_a = history.state) != null && _a.radar) && closeArticle(!0);
+  });
+  let rIdx = 0;
+  const rbs = () => [...document.querySelectorAll("#reader .rb")];
+  function focusR(i) {
+    const l = rbs();
+    if (!l.length) return;
+    rIdx = (i + l.length) % l.length;
+    const el = l[rIdx];
+    el.focus({ preventScroll: !0 }), el.closest(".rbar") || el.scrollIntoView({ block: "nearest" });
+  }
+  function bindReader() {
+    $("#back").onclick = () => closeArticle(!1), $("#readBtn").onclick = () => {
+      readMap[openId] ? delete readMap[openId] : readMap[openId] = Date.now(), saveRead(), keepReader();
+    }, $("#saveBtn").onclick = () => {
+      const a = all().find((x) => x.id === openId);
+      a && (saved[a.id] ? (delete saved[a.id], toast("\u05D4\u05D5\u05E1\u05E8 \u05DE\u05D4\u05E9\u05DE\u05D5\u05E8\u05D9\u05DD")) : (saved[a.id] = a, toast("\u05E0\u05E9\u05DE\u05E8")), lsSet("saved", saved), keepReader());
+    }, $("#nextBtn") && ($("#nextBtn").onclick = (e) => {
+      const id = e.currentTarget.dataset.id;
+      openId = id, markRead(id);
+      try {
+        history.replaceState({ radar: id }, "");
+      } catch (e2) {
+      }
+      render();
+    });
+    const sc = $("#scroller");
+    sc.onscroll = () => {
+      const p = sc.scrollTop / Math.max(1, sc.scrollHeight - sc.clientHeight);
+      $("#prog").style.width = p * 100 + "%";
+    }, rIdx = 0, focusR(0);
+  }
+  function keepReader() {
+    var _a;
+    const st = ((_a = $("#scroller")) == null ? void 0 : _a.scrollTop) || 0, i = rIdx;
+    render(), $("#scroller") && ($("#scroller").scrollTop = st), focusR(i);
+  }
+  function readerKeys(e, k, isBack) {
+    const sc = $("#scroller");
+    if (!sc) return;
+    if (isBack) {
+      e.preventDefault(), closeArticle(!1);
+      return;
+    }
+    const step = sc.clientHeight * 0.45;
+    k === "ArrowDown" || k === "PageDown" ? (e.preventDefault(), sc.scrollBy({ top: k === "PageDown" ? sc.clientHeight * 0.9 : step })) : k === "ArrowUp" || k === "PageUp" ? (e.preventDefault(), sc.scrollBy({ top: -(k === "PageUp" ? sc.clientHeight * 0.9 : step) })) : k === "ArrowLeft" ? (e.preventDefault(), focusR(rIdx + 1)) : k === "ArrowRight" && (e.preventDefault(), focusR(rIdx - 1));
+  }
+  function saveRead() {
+    const ent = Object.entries(readMap);
+    ent.length > 1500 && (readMap = Object.fromEntries(ent.sort((a, b) => b[1] - a[1]).slice(0, 1500))), lsSet("read", readMap);
+  }
+  let lock = null;
+  async function wake() {
+    try {
+      !lock && navigator.wakeLock && document.visibilityState === "visible" && (lock = await navigator.wakeLock.request("screen"), lock.addEventListener("release", () => lock = null));
+    } catch (e) {
+    }
+  }
+  render(), load(), window.addEventListener("hashchange", () => {
+    keyFromHash() && load();
+  }), setInterval(() => {
+    !openId && !locked && document.visibilityState === "visible" && load();
+  }, 20 * 60 * 1e3);
 })();
 </script>
 </body>
