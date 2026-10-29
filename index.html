@@ -7,7 +7,8 @@
 <meta name="referrer" content="no-referrer">
 <title>רדאר</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Frank+Ruhl+Libre:wght@400;500;700&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&display=swap">
+<!-- Arial everywhere; Arimo (Arial's metric twin, with Hebrew) stands in where Arial is not installed, e.g. Android TV. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: lean-back TV screen. Fixed top bar with Israel/World tabs, a "billboard" that previews the focused story (title + summary), and Netflix-style horizontal rows below. D-pad: up/down = rows, left/right = stories, OK = read. Reader is a full-screen overlay. Single dark look on purpose (TV). */
 :root{
@@ -16,9 +17,9 @@
   --ink:#F0F3F8; --muted:#9AA6B8; --dim:#6E7A8E;
   --signal:#55CDB1; --on-signal:#06201A; --focus:#F0F3F8;
   --t-ai:#A996F5; --t-vc:#EBAE58; --t-general:#74ABF0; --t-il:#62C0E3; --t-world:#C9A7E8;
-  --f-display:"Secular One","IBM Plex Sans Hebrew",system-ui,sans-serif;
-  --f-read:"Frank Ruhl Libre","Times New Roman",serif;
-  --f-ui:"IBM Plex Sans Hebrew",system-ui,-apple-system,sans-serif;
+  --f-display:Arial,"Arimo",sans-serif;
+  --f-read:Arial,"Arimo",sans-serif;
+  --f-ui:Arial,"Arimo",sans-serif;
 }
 html{font-size:clamp(15px,1.45vw,30px);height:100%}
 html,body{background:var(--bg);color:var(--ink)}
